@@ -373,8 +373,8 @@ function heVoice() {
 let speakChain = Promise.resolve();
 
 function speak(text, { force=false } = {}) {
-  if (!("speechSynthesis" in window) || !narrationEnabled) return;
-  if (!force && !hasUserGesture) return;
+  if (!("speechSynthesis" in window) || !narrationEnabled) return speakChain;
+  if (!force && !hasUserGesture) return speakChain;
   speakChain = speakChain.then(async () => {
     await primeVoices();
     try { speechSynthesis.cancel(); } catch(e) {}
@@ -384,9 +384,10 @@ function speak(text, { force=false } = {}) {
       u.lang = "he-IL"; u.rate = .95; u.pitch = 1.06; u.volume = 1;
       const v = heVoice(); if (v) u.voice = v;
       speechSynthesis.speak(u);
-      await new Promise(r => { u.onend = r; u.onerror = r; setTimeout(r, 3500); });
+      await new Promise(r => { u.onend = r; u.onerror = r; setTimeout(r, 6000); });
     } catch(e) {}
   });
+  return speakChain;
 }
 
 narTog.addEventListener("click", () => {
@@ -468,7 +469,7 @@ function render() {
     `;
     document.getElementById("startBtn").addEventListener("click", async () => {
       hasUserGesture = true; ensureAudio(); await primeVoices();
-      speak(s.narration, {force:true});
+      await speak(s.narration, {force:true});
       idx = 1; render();
     }, {once:true});
     return;
